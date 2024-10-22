@@ -1,5 +1,5 @@
 exports.processNumber = (number) => {
-  console.log("yotam")
+
   let finalNumber = number;
   if (!number.includes("@s.whatsapp.net")) number = number + "@s.whatsapp.net";
   if (number[0] == "6" && number[1] == "2") return number;

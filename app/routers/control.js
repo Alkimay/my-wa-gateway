@@ -6,9 +6,9 @@ const whatsapp = require("wa-multi-session");
 // Render the control panel page
 router.get("/", async (req, res, next) => {
     try {
-        console.log("asdasd")
+
         const sessions = whatsapp.getAllSession(); // Get all connected sessions
-        console.log(sessions); // Log the session data for debugging
+
 
         // Render the control panel with session data
         res.render("index2", { devices: sessions });

@@ -11,7 +11,7 @@ exports.sendMessage = async (req, res, next) => {
     let to = req.body.to || req.query.to;
     let text = req.body.text || req.query.text;
     let isGroup = req.body.isGroup || req.query.isGroup;
-    console.log(req)
+
     const sessionId =
       req.body.session || req.query.session || req.headers.session;
 
