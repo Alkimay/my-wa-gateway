@@ -1,4 +1,4 @@
-exports.responseSuccessWithData = (data) => ({ data: data });
+exports.responseSuccessWithData = (data) => ({status:'success', data: data });
 exports.responseSuccessWithMessage = (
   message = "Yeyy... Request Send With Successfully"
 ) => ({
