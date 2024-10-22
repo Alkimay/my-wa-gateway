@@ -11,7 +11,7 @@ router.get("/", async (req, res, next) => {
 
 
         // Render the control panel with session data
-        res.render("index2", { devices: sessions });
+        res.render("index2", { devices: sessions,token:process.env.KEY });
     } catch (error) {
         next(error);
     }

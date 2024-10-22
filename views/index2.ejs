@@ -22,9 +22,10 @@
 
                 <!-- Form for Sending Message to the session -->
                 <form action="/control/send-message" method="POST" style="display:inline; margin-left: 10px;">
-                    <input type="hidden" name="session" value="<%= sessionName %>" />
-                    <input type="text" name="to" placeholder="Enter receiver number" required />
-                    <input type="text" name="text" placeholder="Enter your message" required />
+                    <input type="hidden" name="instance_id" value="<%= sessionName %>" />
+                    <input type="hidden" name="access_token" value="<%= token %>" />
+                    <input type="text" name="number" placeholder="Enter receiver number" required />
+                    <input type="text" name="message" placeholder="Enter your message" required />
                     <button type="submit">Send</button>
                 </form>
             </li>
