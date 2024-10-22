@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const whatsappController = require("../controllers/session_controller"); // Adjust this path as necessary
+const messageController = require('../controllers/message_controller');
 const whatsapp = require("wa-multi-session");
 // Render the control panel page
 router.get("/", async (req, res, next) => {
@@ -22,5 +23,14 @@ router.post("/create", whatsappController.createSessionWeb);
 
 // Delete a session
 router.post("/delete", whatsappController.deleteSession);
+
+
+// Existing routes
+
+// Route to send message
+router.post('/send-message', messageController.sendMessage);
+
+// Route to delete session
+router.post('/control/send-message-file', messageController.sendMessageFile);
 
 module.exports = router;

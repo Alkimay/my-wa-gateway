@@ -6,20 +6,32 @@
 <body>
 <h1>Connected Devices</h1>
 
+<h1>Connected Devices</h1>
+
 <ul>
-  <% if (devices && devices.length > 0) { %>
-    <% devices.forEach(function(sessionName) { %>
-      <li>
-        <strong>Session Name:</strong> <%= sessionName %><br>
-        <form action="/control/delete" method="POST">
-          <input type="hidden" name="session" value="<%= sessionName %>" />
-          <button type="submit">Delete</button>
-        </form>
-      </li>
-    <% }) %>
-  <% } else { %>
-    <li>No sessions connected</li>
-  <% } %>
+    <% if (devices && devices.length > 0) { %>
+        <% devices.forEach(function(sessionName) { %>
+            <li>
+                <strong>Session Name:</strong> <%= sessionName %><br>
+
+                <!-- Form for Deleting the session -->
+                <form action="/control/delete" method="POST" style="display:inline;">
+                    <input type="hidden" name="session" value="<%= sessionName %>" />
+                    <button type="submit">Delete</button>
+                </form>
+
+                <!-- Form for Sending Message to the session -->
+                <form action="/control/send-message" method="POST" style="display:inline; margin-left: 10px;">
+                    <input type="hidden" name="session" value="<%= sessionName %>" />
+                    <input type="text" name="to" placeholder="Enter receiver number" required />
+                    <input type="text" name="text" placeholder="Enter your message" required />
+                    <button type="submit">Send</button>
+                </form>
+            </li>
+        <% }) %>
+    <% } else { %>
+        <li>No sessions connected</li>
+    <% } %>
 </ul>
 
 
