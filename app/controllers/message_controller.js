@@ -13,6 +13,9 @@ exports.sendMessage = async (req, res, next) => {
     let text = req.body.message || req.query.message;
     let isGroup = req.body.isGroup || req.query.isGroup;
     let access_token = req.body.access_token || req.query.access_token;
+    let fileWebHttp = req.body.media_url || req.query.media_url;
+    if(fileWebHttp)
+      return sendMessageFile(req, res, next);
     if(access_token !== process.env.KEY) throw new ValidationError("Access Token Invalid")
     const sessionId =
       req.body.instance_id || req.query.instance_id || req.headers.instance_id;
