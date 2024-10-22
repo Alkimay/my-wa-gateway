@@ -44,5 +44,25 @@ whatsapp.onDisconnected((session) => {
 whatsapp.onConnecting((session) => {
   console.log("connecting => ", session);
 });
-
+// whatsapp.onMessageReceived(async (msg) => {
+//   if (msg.key.fromMe || msg.key.remoteJid.includes("status")) return;
+//   await whatsapp.readMessage({
+//     sessionId: msg.sessionId,
+//     key: msg.key,
+//   });
+//   await whatsapp.sendTyping({
+//     sessionId: msg.sessionId,
+//     to: msg.key.remoteJid,
+//     duration: 3000,
+//   });
+//   await whatsapp.sendTextMessage({
+//     sessionId: msg.sessionId,
+//     to: msg.key.remoteJid,
+//     text: "Hello!",
+//     answering: msg, // for quoting message
+//   });
+// });
 whatsapp.loadSessionsFromStorage();
+const controlRouter = require("./app/routers/control");
+
+app.use("/control", controlRouter);

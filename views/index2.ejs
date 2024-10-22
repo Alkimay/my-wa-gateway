@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WhatsApp Control Panel</title>
+</head>
+<body>
+<h1>Connected Devices</h1>
+
+<ul>
+  <% if (devices && devices.length > 0) { %>
+    <% devices.forEach(function(sessionName) { %>
+      <li>
+        <strong>Session Name:</strong> <%= sessionName %><br>
+        <form action="/control/delete" method="POST">
+          <input type="hidden" name="session" value="<%= sessionName %>" />
+          <button type="submit">Delete</button>
+        </form>
+      </li>
+    <% }) %>
+  <% } else { %>
+    <li>No sessions connected</li>
+  <% } %>
+</ul>
+
+
+<h2>Create New Session</h2>
+<form action="/control/create" method="POST">
+  <label for="session">Session Name:</label>
+  <input type="text" name="session" required>
+  <button type="submit">Create Session</button>
+</form>
+</body>
+</html>

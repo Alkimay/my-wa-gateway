@@ -6,6 +6,34 @@ const {
   responseSuccessWithData,
 } = require("../../utils/response");
 
+
+exports.createSessionWeb = async (req, res, next) => {
+  try {
+    const scan = req.query.scan;
+    const sessionName =
+        req.body.session || req.query.session || req.headers.session;
+
+    if (!sessionName) {
+      throw new Error("Bad Request");
+    }
+
+    // Event listener for QR code updates
+    whatsapp.onQRUpdated(async (data) => {
+      if (data.sessionId == sessionName && res && !res.headersSent) {
+        const qr = await toDataURL(data.qr);
+
+        // Render the scan.ejs template with the QR code
+        res.render("scan", { qr });
+      }
+    });
+
+    // Start the session and display the QR code on scan.ejs
+    await whatsapp.startSession(sessionName, { printQR: true });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.createSession = async (req, res, next) => {
   try {
     const scan = req.query.scan;
@@ -17,7 +45,7 @@ exports.createSession = async (req, res, next) => {
     whatsapp.onQRUpdated(async (data) => {
       if (res && !res.headersSent) {
         const qr = await toDataURL(data.qr);
-        if (scan && data.sessionId == sessionName) {
+        if (scan && data.sessionId === sessionName) {
           res.render("scan", { qr: qr });
         } else {
           res.status(200).json(

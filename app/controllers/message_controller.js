@@ -1,6 +1,10 @@
 const whatsapp = require("wa-multi-session");
 const ValidationError = require("../../utils/error");
 const { responseSuccessWithData } = require("../../utils/response");
+const fs = require('fs');
+const axios = require('axios');
+const path = require('path');
+const os = require('os');
 
 exports.sendMessage = async (req, res, next) => {
   try {
@@ -14,6 +18,8 @@ exports.sendMessage = async (req, res, next) => {
 
     const receiver = to;
     if (!sessionId) throw new ValidationError("Session Not Founds");
+
+
     const send = await whatsapp.sendTextMessage({
       sessionId,
       to: receiver,
@@ -29,6 +35,96 @@ exports.sendMessage = async (req, res, next) => {
         remoteJid: send?.key?.remoteJid,
       })
     );
+  } catch (error) {
+    next(error);
+  }
+};
+exports.readMessage = async (req, res, next) => {
+  try {
+    let key = req.body.key || req.query.key;
+
+    const sessionId =
+        req.body.session || req.query.session || req.headers.session;
+
+    if (!key) throw new ValidationError("Missing Parameters");
+
+    if (!sessionId) throw new ValidationError("Session Not Founds");
+
+
+    const send =await whatsapp.readMessage({
+      sessionId:sessionId,
+      key: key,
+    });
+
+    res.status(200).json(
+        responseSuccessWithData({
+          id: send?.key?.id,
+          status: send?.status,
+          message: send?.message?.extendedTextMessage?.text || "Not Text",
+          remoteJid: send?.key?.remoteJid,
+        })
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+exports.sendMessageFile = async (req, res, next) => {
+  try {
+    let to = req.body.to || req.query.to;
+    let text = req.body.text || req.query.text;
+    let isGroup = req.body.isGroup || req.query.isGroup;
+    let fileWebHttp = req.body.file || req.query.file;
+    let filename = req.body.filename || req.query.filename;
+
+    const sessionId = req.body.session || req.query.session || req.headers.session;
+
+    if (!to || !fileWebHttp) throw new ValidationError("Missing Parameters");
+    if (!sessionId) throw new ValidationError("Session Not Found");
+
+    const receiver = to;
+
+    // Download the file from the URL and save it to a temporary directory
+    const tempFilePath = path.join(os.tmpdir(), filename);
+    const writer = fs.createWriteStream(tempFilePath);
+
+    const response = await axios({
+      url: fileWebHttp,
+      method: 'GET',
+      responseType: 'stream',
+    });
+
+    response.data.pipe(writer);
+
+    // Ensure the file is fully downloaded before proceeding
+    await new Promise((resolve, reject) => {
+      writer.on('finish', resolve);
+      writer.on('error', reject);
+    });
+
+    // Now that the file is downloaded, read it from the temp directory
+    const document = fs.readFileSync(tempFilePath);
+
+    // Send the document via your whatsapp.sendDocument method
+    const send = await whatsapp.sendDocument({
+      sessionId: sessionId,
+      to: receiver,
+      filename: filename,
+      media: document,
+      text: text,
+    });
+
+    // Respond with the success data
+    res.status(200).json(
+        responseSuccessWithData({
+          id: send?.key?.id,
+          status: send?.status,
+          message: send?.message?.extendedTextMessage?.text || "Not Text",
+          remoteJid: send?.key?.remoteJid,
+        })
+    );
+
+    // Clean up the temporary file
+    fs.unlinkSync(tempFilePath);
   } catch (error) {
     next(error);
   }
@@ -66,6 +162,35 @@ exports.sendBulkMessage = async (req, res, next) => {
       await whatsapp.createDelay(delay ?? 1000);
     }
     console.log("SEND BULK MESSAGE WITH DELAY SUCCESS");
+  } catch (error) {
+    next(error);
+  }
+};
+exports.readMessage = async (req, res, next) => {
+  try {
+    let key = req.body.key || req.query.key;
+
+    const sessionId =
+        req.body.session || req.query.session || req.headers.session;
+
+    if (!key) throw new ValidationError("Missing Parameters");
+
+    if (!sessionId) throw new ValidationError("Session Not Founds");
+
+
+    const send =await whatsapp.readMessage({
+      sessionId:sessionId,
+      key: key,
+    });
+
+    res.status(200).json(
+        responseSuccessWithData({
+          id: send?.key?.id,
+          status: send?.status,
+          message: send?.message?.extendedTextMessage?.text || "Not Text",
+          remoteJid: send?.key?.remoteJid,
+        })
+    );
   } catch (error) {
     next(error);
   }
