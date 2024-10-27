@@ -14,7 +14,7 @@
                 <strong>Session Name:</strong> <%= sessionName %><br>
 
                 <!-- Form for Deleting the session -->
-                <form action="/control/delete" method="POST" style="display:inline;" target="_blank" >
+                <form action="/control/delete" method="POST" style="display:inline;" target="_blank" onsubmit="handleSessionCreate(event)" >
                     <input type="hidden" name="session" value="<%= sessionName %>" />
                     <button type="submit">Delete</button>
                 </form>
@@ -37,10 +37,17 @@
 
 
 <h2>Create New Session</h2>
-<form action="/control/create" method="POST" target="_blank">
+<form action="/control/create" method="POST" target="_blank" onsubmit="handleSessionCreate(event)">
   <label for="session">Session Name:</label>
   <input type="text" name="session" required>
   <button type="submit">Create Session</button>
 </form>
+<script>
+    function handleSessionCreate(event) {
+        setTimeout(() => {
+            location.reload(); // Refresh the current page after a short delay
+        }, 1000); // Adjust delay as needed (1 second here)
+    }
+</script>
 </body>
 </html>
