@@ -6,7 +6,8 @@ const whatsapp = require("wa-multi-session");
 // Render the control panel page
 router.get("/", async (req, res, next) => {
     try {
-
+        const token = req.query.token
+        if(token !== process.env.KEY) throw new Error("Access Token Invalid")
         const sessions = whatsapp.getAllSession(); // Get all connected sessions
 
 

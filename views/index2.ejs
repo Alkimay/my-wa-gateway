@@ -6,7 +6,6 @@
 <body>
 <h1>Connected Devices</h1>
 
-<h1>Connected Devices</h1>
 
 <ul>
     <% if (devices && devices.length > 0) { %>
@@ -15,19 +14,20 @@
                 <strong>Session Name:</strong> <%= sessionName %><br>
 
                 <!-- Form for Deleting the session -->
-                <form action="/control/delete" method="POST" style="display:inline;">
+                <form action="/control/delete" method="POST" style="display:inline;" target="_blank" >
                     <input type="hidden" name="session" value="<%= sessionName %>" />
                     <button type="submit">Delete</button>
                 </form>
 
                 <!-- Form for Sending Message to the session -->
-                <form action="/control/send-message" method="POST" style="display:inline; margin-left: 10px;">
+                <form action="/control/send-message" method="POST" style="display:inline; margin-left: 10px;" target="_blank">
                     <input type="hidden" name="instance_id" value="<%= sessionName %>" />
                     <input type="hidden" name="access_token" value="<%= token %>" />
                     <input type="text" name="number" placeholder="Enter receiver number" required />
                     <input type="text" name="message" placeholder="Enter your message" required />
                     <button type="submit">Send</button>
                 </form>
+
             </li>
         <% }) %>
     <% } else { %>
@@ -37,7 +37,7 @@
 
 
 <h2>Create New Session</h2>
-<form action="/control/create" method="POST">
+<form action="/control/create" method="POST" target="_blank">
   <label for="session">Session Name:</label>
   <input type="text" name="session" required>
   <button type="submit">Create Session</button>
