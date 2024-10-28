@@ -86,26 +86,27 @@ exports.readMessage = async (req, res, next) => {
   }
 };
 exports.sendMessageFile = async (req, res, next) => {
-  try {
+  let tempFilePath; // Declare file path here to ensure access in finally block
 
+  try {
     let to = req.body.number || req.query.number;
     let text = req.body.message || req.query.message;
     let isGroup = req.body.isGroup || req.query.isGroup;
     let fileWebHttp = req.body.media_url || req.query.media_url;
     let filename = req.body.filename || req.query.filename;
     let access_token = req.body.access_token || req.query.access_token;
-    if(access_token !== process.env.KEY) throw new ValidationError("Access Token Invalid")
+
+    if (access_token !== process.env.KEY) throw new ValidationError("Access Token Invalid");
     const sessionId = req.body.instance_id || req.query.instance_id || req.headers.instance_id;
 
     if (!to || !fileWebHttp) throw new ValidationError("Missing Parameters");
     if (!sessionId) throw new ValidationError("Session Not Found");
 
     const receiver = to;
-
-    // Download the file from the URL and save it to a temporary directory
-    const tempFilePath = path.join(os.tmpdir(), filename);
+    tempFilePath = path.join(os.tmpdir(), filename);
     const writer = fs.createWriteStream(tempFilePath);
 
+    // Download the file from the URL
     const response = await axios({
       url: fileWebHttp,
       method: 'GET',
@@ -114,40 +115,56 @@ exports.sendMessageFile = async (req, res, next) => {
 
     response.data.pipe(writer);
 
-    // Ensure the file is fully downloaded before proceeding
+    // Wait until the file is fully downloaded
     await new Promise((resolve, reject) => {
       writer.on('finish', resolve);
       writer.on('error', reject);
     });
 
-    // Now that the file is downloaded, read it from the temp directory
     const document = fs.readFileSync(tempFilePath);
 
-    // Send the document via your whatsapp.sendDocument method
-    const send = await whatsapp.sendDocument({
-      sessionId: sessionId,
-      to: receiver,
-      filename: filename,
-      media: document,
-      text: text,
-    });
+    // Retry function to send the document
+    const attemptSendDocument = async (attempts = 3) => {
+      try {
+        const send = await whatsapp.sendDocument({
+          sessionId: sessionId,
+          to: receiver,
+          filename: filename,
+          media: document,
+          text: text,
+        });
 
-    // Respond with the success data
-    res.status(200).json(
-        responseSuccessWithData({
-          id: send?.key?.id,
-          status: send?.status,
-          message: send?.message?.extendedTextMessage?.text || "Not Text",
-          remoteJid: send?.key?.remoteJid,
-        })
-    );
+        res.status(200).json(
+            responseSuccessWithData({
+              id: send?.key?.id,
+              status: send?.status,
+              message: send?.message?.extendedTextMessage?.text || "No Text",
+              remoteJid: send?.key?.remoteJid,
+            })
+        );
+      } catch (error) {
+        if (error.message.includes("Connection Closed") && attempts > 1) {
+          console.warn(`Connection closed, retrying... Attempts left: ${attempts - 1}`);
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Delay before retry
+          return attemptSendDocument(attempts - 1);
+        }
+        throw error; // Rethrow if retries exhausted or error is not connection-related
+      }
+    };
 
-    // Clean up the temporary file
-    fs.unlinkSync(tempFilePath);
+    await attemptSendDocument();
+
   } catch (error) {
     next(error);
+  } finally {
+    // Ensure the temporary file is deleted
+    if (tempFilePath && fs.existsSync(tempFilePath)) {
+      fs.unlinkSync(tempFilePath);
+    }
   }
 };
+
+
 exports.sendBulkMessage = async (req, res, next) => {
   try {
     const sessionId =
