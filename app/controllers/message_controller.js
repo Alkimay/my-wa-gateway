@@ -8,43 +8,54 @@ const os = require('os');
 
 exports.sendMessage = async (req, res, next) => {
   try {
-
     let to = req.body.number || req.query.number;
     let text = req.body.message || req.query.message;
     let isGroup = req.body.isGroup || req.query.isGroup;
     let access_token = req.body.access_token || req.query.access_token;
     let fileWebHttp = req.body.media_url || req.query.media_url;
-    if(fileWebHttp)
-      return this.sendMessageFile(req, res, next);
-    if(access_token !== process.env.KEY) throw new ValidationError("Access Token Invalid")
-    const sessionId =
-      req.body.instance_id || req.query.instance_id || req.headers.instance_id;
 
+    if (fileWebHttp) return this.sendMessageFile(req, res, next);
+    if (access_token !== process.env.KEY) throw new ValidationError("Access Token Invalid");
+
+    const sessionId = req.body.instance_id || req.query.instance_id || req.headers.instance_id;
     if (!to || !text) throw new ValidationError("Missing Parameters");
+    if (!sessionId) throw new ValidationError("Session Not Found");
 
     const receiver = to;
-    if (!sessionId) throw new ValidationError("Session Not Founds");
 
+    const attemptSendMessage = async (attempts = 3) => {
+      try {
+        const send = await whatsapp.sendTextMessage({
+          sessionId,
+          to: receiver,
+          isGroup: !!isGroup,
+          text,
+        });
 
-    const send = await whatsapp.sendTextMessage({
-      sessionId,
-      to: receiver,
-      isGroup: !!isGroup,
-      text,
-    });
+        res.status(200).json(
+            responseSuccessWithData({
+              id: send?.key?.id,
+              status: send?.status,
+              message: send?.message?.extendedTextMessage?.text || "No Text",
+              remoteJid: send?.key?.remoteJid,
+            })
+        );
+      } catch (error) {
+        if (error.message.includes("Connection Closed") && attempts > 1) {
+          console.warn(`Connection closed, retrying... Attempts left: ${attempts - 1}`);
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Delay before retry
+          return attemptSendMessage(attempts - 1);
+        }
+        throw error; // Rethrow if retries exhausted or error is not related to connection
+      }
+    };
 
-    res.status(200).json(
-      responseSuccessWithData({
-        id: send?.key?.id,
-        status: send?.status,
-        message: send?.message?.extendedTextMessage?.text || "Not Text",
-        remoteJid: send?.key?.remoteJid,
-      })
-    );
+    await attemptSendMessage();
   } catch (error) {
     next(error);
   }
 };
+
 exports.readMessage = async (req, res, next) => {
   try {
     let key = req.body.key || req.query.key;
