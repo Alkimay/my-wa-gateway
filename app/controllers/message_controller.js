@@ -14,6 +14,12 @@ exports.sendMessage = async (req, res, next) => {
     let access_token = req.body.access_token || req.query.access_token;
     let fileWebHttp = req.body.media_url || req.query.media_url;
 
+    // Auto-detect group if 'to' ends with '@g.us'
+    if (to && typeof to === 'string' && to.endsWith('@g.us')) {
+      isGroup = true;
+
+    }
+
     if (fileWebHttp) return this.sendMessageFile(req, res, next);
     if (access_token !== process.env.KEY) throw new ValidationError("Access Token Invalid");
 
@@ -96,6 +102,11 @@ exports.sendMessageFile = async (req, res, next) => {
     let filename = req.body.filename || req.query.filename;
     let access_token = req.body.access_token || req.query.access_token;
 
+    // Auto-detect group if 'to' ends with '@g.us'
+    if (to && typeof to === 'string' && to.endsWith('@g.us')) {
+      isGroup = true;
+    }
+
     if (access_token !== process.env.KEY) throw new ValidationError("Access Token Invalid");
     const sessionId = req.body.instance_id || req.query.instance_id || req.headers.instance_id;
 
@@ -132,6 +143,7 @@ exports.sendMessageFile = async (req, res, next) => {
           filename: filename,
           media: document,
           text: text,
+            isGroup: !!isGroup,
         });
 
         res.status(200).json(
@@ -227,6 +239,29 @@ exports.readMessage = async (req, res, next) => {
           remoteJid: send?.key?.remoteJid,
         })
     );
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.listGroups = async (req, res, next) => {
+  try {
+    const sessionId = req.body.instance_id || req.query.instance_id || req.headers.instance_id;
+    if (!sessionId) throw new ValidationError("Session Not Found");
+
+    const sock = await whatsapp.getSession(sessionId);
+
+    // Call Baileys group fetch
+    const allGroups = await sock.groupFetchAllParticipating();
+
+    // Format nicely
+    const groups = Object.values(allGroups).map(meta => ({
+      id: meta.id,
+      name: meta.subject,
+      participants: meta.participants.length,
+    }));
+
+    return res.status(200).json(responseSuccessWithData(groups));
   } catch (error) {
     next(error);
   }

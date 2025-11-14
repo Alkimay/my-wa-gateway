@@ -9,7 +9,7 @@ const {
 
 exports.createSessionWeb = async (req, res, next) => {
   try {
-    const scan = req.query.scan;
+
     const sessionName =
         req.body.session || req.query.session || req.headers.session;
 
